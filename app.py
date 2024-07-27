@@ -8,8 +8,8 @@ from diffusers import StableDiffusionPipeline
 
 # Initialize the Stable Diffusion pipeline
 modelid = "runwayml/stable-diffusion-v1-5"
-device = "cpu"
-pipe = StableDiffusionPipeline.from_pretrained(modelid, revision="fp16", torch_dtype=torch.float16, use_auth_token=auth_token) 
+device = "cuda"
+pipe = StableDiffusionPipeline.from_pretrained(modelid, torch_dtype=torch.float16, use_auth_token=auth_token) 
 pipe.to(device)
 
 # Streamlit app
