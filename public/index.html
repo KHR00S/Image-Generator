@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Generator</title>
+    <script>
+        async function generateImage() {
+            const prompt = document.getElementById("prompt").value;
+            const guidanceScale = document.getElementById("guidanceScale").value;
+
+            if (!prompt) {
+                alert("Please enter a prompt");
+                return;
+            }
+
+            document.getElementById("status").innerText = "Generating image...";
+
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt: prompt, guidance_scale: parseFloat(guidanceScale) })
+            });
+
+            if (!response.ok) {
+                document.getElementById("status").innerText = "Error generating image";
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            document.getElementById("generatedImage").src = url;
+            document.getElementById("status").innerText = "";
+        }
+    </script>
+</head>
+<body>
+    <h1>IMAGE GENERATOR</h1>
+    <p>This app uses the Stable Diffusion model to generate high-quality images based on your input, made By Fakhrus</p>
+
+    <input type="text" id="prompt" placeholder="Enter your prompt">
+    <input type="range" id="guidanceScale" min="1.0" max="20.0" value="8.5" step="0.1" oninput="this.nextElementSibling.value = this.value">
+    <output>8.5</output>
+    <button onclick="generateImage()">Generate</button>
+
+    <p id="status"></p>
+    <img id="generatedImage" alt="Generated Image" style="max-width: 100%;">
+
+</body>
+</html>
