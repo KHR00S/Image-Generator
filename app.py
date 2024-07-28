@@ -1,30 +1,35 @@
-import streamlit as st
+from flask import Flask, request, jsonify, send_file
 from PIL import Image
-from authtoken import auth_token
-
+from io import BytesIO
 import torch
 from torch import autocast
 from diffusers import StableDiffusionPipeline
+from authtoken import auth_token
 
-# Initialize the Stable Diffusion pipeline
-modelid = "runwayml/stable-diffusion-v1-5"
+app = Flask(__name__)
+
+modelid = "stabilityai/stable-diffusion-3-mediums"
 device = "cuda"
-pipe = StableDiffusionPipeline.from_pretrained(modelid, torch_dtype=torch.float16, use_auth_token=auth_token) 
+pipe = StableDiffusionPipeline.from_pretrained(modelid, torch_dtype=torch.float16, use_auth_token=auth_token)
 pipe.to(device)
 
-# Streamlit app
-st.title("IMAGE GENERATOR")
-st. write("This app uses the Stable Diffusion model to generate high-quality images based on your input, made By Fakhrus")
+@app.route('/generate', methods=['POST'])
+def generate():
+    data = request.json
+    prompt = data.get("prompt")
+    guidance_scale = data.get("guidance_scale", 8.5)
 
-prompt = st.text_input("Enter your prompt", "")
-guidance_scale = st.slider("Guidance Scale", min_value=1.0, max_value=20.0, value=8.5)
+    if not prompt:
+        return jsonify({"error": "Please enter a prompt"}), 400
 
-if st.button("Generate"):
-    if prompt:
-        with st.spinner('Generating image...'):
-            with autocast(device):
-                image = pipe(prompt, guidance_scale=guidance_scale).images[0]
-            image.save('generatedimage.png')
-            st.image('generatedimage.png', caption='Generated Image', use_column_width=True)
-    else:
-        st.warning("Please enter a prompt to generate an image.")
+    with autocast(device):
+        image = pipe(prompt, guidance_scale=guidance_scale).images[0]
+
+    img_io = BytesIO()
+    image.save(img_io, 'PNG')
+    img_io.seek(0)
+
+    return send_file(img_io, mimetype='image/png')
+
+if __name__ == '__main__':
+    app.run(debug=True)
